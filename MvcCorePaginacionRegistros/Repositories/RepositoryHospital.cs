@@ -19,6 +19,33 @@ using MvcCorePaginacionRegistros.Models;
 //	from V_DEPARTAMENTOS_INDIVIDUAL
 //	where POSICION >= @posicion and POSICION < (@posicion + 2)
 //go
+//create view V_GRUPO_EMPLEADOS
+//as
+//	select cast(
+//		row_number() over (order by apellido) as int) as posicion,
+//        ISNULL(EMP_NO, 0) AS EMP_NO, APELLIDO
+//        , OFICIO, SALARIO, DEPT_NO FROM EMP
+//go
+//create procedure SP_GRUPO_EMPLEADOS
+//(@posicion int)
+//as
+//	select EMP_NO, APELLIDO, OFICIO, SALARIO, DEPT_NO
+//	from V_GRUPO_EMPLEADOS
+//	where posicion >= @posicion and posicion < (@posicion + 3)
+//go
+//exec SP_GRUPO_EMPLEADOS 4
+//create procedure SP_GRUPO_EMPLEADOS_OFICIO
+//(@posicion int, @oficio nvarchar(50))
+//as
+//select EMP_NO, APELLIDO, OFICIO, SALARIO, DEPT_NO from 
+//	(select cast(
+//	ROW_NUMBER() OVER (ORDER BY APELLIDO) as int) AS POSICION
+//	, EMP_NO, APELLIDO, OFICIO, SALARIO, DEPT_NO
+//	from EMP
+//	where OFICIO = @oficio) as QUERY
+//	where QUERY.POSICION >= @posicion and QUERY.POSICION < (@posicion + 2)
+//go
+//exec SP_GRUPO_EMPLEADOS_OFICIO 1, 'EMPLEADO'
 
 #endregion
 
@@ -32,6 +59,42 @@ namespace MvcCorePaginacionRegistros.Repositories
         {
             this.context = context;
         }
+
+        //METODO PARA SABER EL NUMERO DE EMPLEADOS POR OFICIO
+        public async Task<int> GetNumeroEmpleadosOficioAsync(string oficio)
+        {
+            return await this.context.Empleados
+                .Where(z => z.Oficio == oficio).CountAsync();
+        }
+
+        public async Task<List<Empleado>> GetGrupoEmpleadosOficioAsync
+            (int posicion, string oficio)
+        {
+            string sql = "SP_GRUPO_EMPLEADOS_OFICIO @posicion, @oficio";
+            SqlParameter pamPosicion =
+                new SqlParameter("@posicion", posicion);
+            SqlParameter pamOficio =
+                new SqlParameter("@oficio", oficio);
+            var consulta = this.context.Empleados.FromSqlRaw
+                (sql, pamPosicion, pamOficio);
+            return await consulta.ToListAsync();
+        }
+
+        public async Task<int> GetNumeroEmpleadosAsync()
+        {
+            return await this.context.Empleados.CountAsync();
+        }
+
+        public async Task<List<Empleado>> 
+            GetGrupoEmpleadosAsync(int posicion)
+        {
+            string sql = "SP_GRUPO_EMPLEADOS @posicion";
+            SqlParameter pamPosicion =
+                new SqlParameter("@posicion", posicion);
+            var consulta = this.context.Empleados.FromSqlRaw(sql, pamPosicion);
+            return await consulta.ToListAsync();
+        }
+
 
         public async Task<List<Departamento>>
             GetGrupoDepartamentosAsync(int posicion)
