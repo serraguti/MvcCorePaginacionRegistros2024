@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MvcCorePaginacionRegistros.Data;
 using MvcCorePaginacionRegistros.Models;
+using System.Data;
 
 #region VISTAS Y PROCEDIMIENTOS
 //create view V_DEPARTAMENTOS_INDIVIDUAL
@@ -46,7 +47,34 @@ using MvcCorePaginacionRegistros.Models;
 //	where QUERY.POSICION >= @posicion and QUERY.POSICION < (@posicion + 2)
 //go
 //exec SP_GRUPO_EMPLEADOS_OFICIO 1, 'EMPLEADO'
-
+//create procedure SP_GRUPO_EMPLEADOS_OFICIO_OUT
+//(@posicion int, @oficio nvarchar(50)
+//, @registros int out)
+//as
+//select @registros = count(EMP_NO) from EMP
+//where OFICIO=@oficio
+//select EMP_NO, APELLIDO, OFICIO, SALARIO, DEPT_NO from 
+//	(select cast(
+//	ROW_NUMBER() OVER (ORDER BY APELLIDO) as int) AS POSICION
+//	, EMP_NO, APELLIDO, OFICIO, SALARIO, DEPT_NO
+//	from EMP
+//	where OFICIO = @oficio) as QUERY
+//	where QUERY.POSICION >= @posicion and QUERY.POSICION < (@posicion + 2)
+//go
+//create procedure SP_GRUPO_EMPLEADOS_DEPARTAMENTO
+//(@posicion int, @departamento int
+//, @registros int out)
+//as
+//select @registros = count(EMP_NO) from EMP
+//where DEPT_NO=@departamento
+//select EMP_NO, APELLIDO, OFICIO, SALARIO, DEPT_NO from 
+//	(select cast(
+//	ROW_NUMBER() OVER (ORDER BY APELLIDO) as int) AS POSICION
+//	, EMP_NO, APELLIDO, OFICIO, SALARIO, DEPT_NO
+//	from EMP
+//	where DEPT_NO=@departamento) as QUERY
+//	where QUERY.POSICION >= @posicion and QUERY.POSICION < (@posicion + 2)
+//go
 #endregion
 
 namespace MvcCorePaginacionRegistros.Repositories
@@ -58,6 +86,58 @@ namespace MvcCorePaginacionRegistros.Repositories
         public RepositoryHospital(HospitalContext context)
         {
             this.context = context;
+        }
+
+        //EL CONTROLLER NOS VA A DAR UNA POSICION Y UN OFICIO
+        //DEBEMOS DEVOLVER LOS EMPLEADOS Y EL NUMERO DE REGISTROS
+        public async Task<ModelEmpleadoPaginacion> 
+            GetEmpleadoDepartamentoAsync
+            (int posicion, int iddepartamento)
+        {
+            string sql = "SP_REGISTRO_EMPLEADO_DEPARTAMENTO @posicion, @departamento, "
+                + " @registros out";
+            SqlParameter pamPosicion = new SqlParameter("@posicion", posicion);
+            SqlParameter pamDepartamento = 
+                new SqlParameter("@departamento", iddepartamento);
+            SqlParameter pamRegistros = new SqlParameter("@registros", -1);
+            pamRegistros.Direction = ParameterDirection.Output;
+            var consulta =
+                this.context.Empleados.FromSqlRaw
+                (sql, pamPosicion, pamDepartamento, pamRegistros);
+            //PRIMERO DEBEMOS EJECUTAR LA CONSULTA PARA PODER RECUPERAR 
+            //LOS PARAMETROS DE SALIDA
+            var datos = await consulta.ToListAsync();
+            Empleado empleado = datos.FirstOrDefault();
+            int registros = (int)pamRegistros.Value;
+            return new ModelEmpleadoPaginacion
+            {
+                Registros = registros,
+                Empleado = empleado
+            };
+        }
+
+        //EL CONTROLLER NOS VA A DAR UNA POSICION Y UN OFICIO
+        //DEBEMOS DEVOLVER LOS EMPLEADOS Y EL NUMERO DE REGISTROS
+        public async Task<ModelPaginacionEmpleados> GetGrupoEmpleadosOficioOutAsync
+            (int posicion, string oficio)
+        {
+            string sql = "SP_GRUPO_EMPLEADOS_OFICIO_OUT @posicion, @oficio, "
+                + " @registros out";
+            SqlParameter pamPosicion = new SqlParameter("@posicion", posicion);
+            SqlParameter pamOficio = new SqlParameter("@oficio", oficio);
+            SqlParameter pamRegistros = new SqlParameter("@registros", -1);
+            pamRegistros.Direction = ParameterDirection.Output;
+            var consulta =
+                this.context.Empleados.FromSqlRaw
+                (sql, pamPosicion, pamOficio, pamRegistros);
+            //PRIMERO DEBEMOS EJECUTAR LA CONSULTA PARA PODER RECUPERAR 
+            //LOS PARAMETROS DE SALIDA
+            List<Empleado> empleados = await consulta.ToListAsync();
+            int registros = (int)pamRegistros.Value;
+            return new ModelPaginacionEmpleados
+            {
+                NumeroRegistros = registros, Empleados = empleados
+            };
         }
 
         //METODO PARA SABER EL NUMERO DE EMPLEADOS POR OFICIO
@@ -136,6 +216,12 @@ namespace MvcCorePaginacionRegistros.Repositories
         public async Task<List<Departamento>> GetDepartamentosAsync()
         {
             return await this.context.Departamentos.ToListAsync();
+        }
+
+        public async Task<Departamento> FindDepartamentosAsync(int id)
+        {
+            return await this.context.Departamentos
+                .FirstOrDefaultAsync(x => x.IdDepartamento == id);
         }
 
         public async Task<List<Empleado>> GetEmpleadosDepartamentoAsync

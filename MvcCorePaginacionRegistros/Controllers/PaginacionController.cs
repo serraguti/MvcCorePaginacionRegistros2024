@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using MvcCorePaginacionRegistros.Models;
 using MvcCorePaginacionRegistros.Repositories;
 
@@ -13,14 +14,94 @@ namespace MvcCorePaginacionRegistros.Controllers
             this.repo = repo;
         }
 
-        public async Task<IActionResult> EmpleadosOficio
-            (int? posicion)
+        public async Task<IActionResult> Departamentos()
+        {
+            List<Departamento> departamentos = await this.repo.GetDepartamentosAsync();
+            return View(departamentos);
+        }
+
+        public async Task<IActionResult> EmpleadosDepartamento
+            (int? posicion, int iddepartamento)
+        {
+            if (posicion == null)
+            {
+                //POSICION PARA EL EMPLEADO
+                posicion = 1;
+            }
+            ModelEmpleadoPaginacion model = await
+                this.repo.GetEmpleadoDepartamentoAsync
+                (posicion.Value, iddepartamento);
+            Departamento departamento = 
+                await this.repo.FindDepartamentosAsync(iddepartamento);
+            ViewData["DEPARTAMENTOSELECCIONADO"] = departamento;
+            ViewData["REGISTROS"] = model.Registros;
+            ViewData["DEPARTAMENTO"] = iddepartamento;
+            int siguiente = posicion.Value + 1;
+            //DEBEMOS COMPROBAR QUE NO PASAMOS DEL NUMERO DE REGISTROS
+            if (siguiente > model.Registros)
+            {
+                //EFECTO OPTICO
+                siguiente = model.Registros;
+            }
+            int anterior = posicion.Value - 1;
+            if (anterior < 1)
+            {
+                anterior = 1;
+            }
+            ViewData["ULTIMO"] = model.Registros;
+            ViewData["SIGUIENTE"] = siguiente;
+            ViewData["ANTERIOR"] = anterior;
+            ViewData["POSICION"] = posicion;
+            return View(model.Empleado);
+        }
+
+
+        public async Task<IActionResult> EmpleadosOficioOut
+            (int? posicion, string oficio)
         {
             if (posicion == null)
             {
                 posicion = 1;
+                return View();
             }
-            return View();
+            else
+            {
+                ModelPaginacionEmpleados model = await
+                    this.repo.GetGrupoEmpleadosOficioOutAsync(posicion.Value, oficio);
+                ViewData["REGISTROS"] = model.NumeroRegistros;
+                ViewData["OFICIO"] = oficio;
+                return View(model.Empleados);
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EmpleadosOficioOut
+            (string oficio)
+        {
+            ModelPaginacionEmpleados model = await
+                this.repo.GetGrupoEmpleadosOficioOutAsync(1, oficio);
+            ViewData["REGISTROS"] = model.NumeroRegistros;
+            ViewData["OFICIO"] = oficio;
+            return View(model.Empleados);
+        }
+
+        public async Task<IActionResult> EmpleadosOficio
+            (int? posicion, string oficio)
+        {
+            if (posicion == null)
+            {
+                posicion = 1;
+                return View();
+            }
+            else
+            {
+                List<Empleado> empleados = await
+                    this.repo.GetGrupoEmpleadosOficioAsync(posicion.Value, oficio);
+                int registros = await this.repo.GetNumeroEmpleadosOficioAsync(oficio);
+                ViewData["REGISTROS"] = registros;
+                ViewData["OFICIO"] = oficio;
+                return View(empleados);
+            }
         }
 
         [HttpPost]
@@ -32,6 +113,7 @@ namespace MvcCorePaginacionRegistros.Controllers
                 this.repo.GetGrupoEmpleadosOficioAsync(1, oficio);
             int registros = await this.repo.GetNumeroEmpleadosOficioAsync(oficio);
             ViewData["REGISTROS"] = registros;
+            ViewData["OFICIO"] = oficio;
             return View(empleados);
         }
 

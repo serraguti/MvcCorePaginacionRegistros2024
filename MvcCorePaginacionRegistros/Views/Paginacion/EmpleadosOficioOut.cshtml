@@ -1,7 +1,7 @@
 ﻿@model List<Empleado>
 
 @{
-    ViewData["Title"] = "EmpleadosOficio";
+    ViewData["Title"] = "EmpleadosOficioOut";
 }
 
 @{
@@ -13,31 +13,32 @@
         registros = (int)ViewData["REGISTROS"];
         oficio = ViewData["OFICIO"].ToString();
     }
-    //VAMOS A RECIBIR SIEMPRE EL NUMERO DE REGISTROS???
 }
 
-<h1 style="color:red">Paginar Empleados Oficio</h1>
+<h1 style="color:red">Paginar Empleados Oficio OUT</h1>
 
+<h2 style="color:blue">
+    Registros filtrados: @registros
+</h2>
 <form method="post">
     <label>Introduzca oficio</label>
-    <input type="text" name="oficio" class="form-control"/>
-    <button class="btn btn-info">
+    <input type="text" name="oficio" class="form-control" />
+    <button class="btn btn-dark">
         Buscar empleados
     </button>
 </form>
 
 @if (Model != null)
 {
-    //INCLUIMOS LA PAGINACION Y EL DIBUJO DE LOS EMPLEADOS
     <div>
         <ul class="list-group list-group-horizontal">
             @for (int i = 1; i <= registros; i += 2)
             {
-                <li class="list-group-item list-group-item-info">
+                <li class="list-group-item list-group-item-warning">
                     <a asp-controller="Paginacion"
-                       asp-action="EmpleadosOficio"
+                       asp-action="EmpleadosOficioOut"
                        asp-route-posicion="@i"
-                        asp-route-oficio="@oficio">
+                       asp-route-oficio="@oficio">
                         @numeroPagina
                     </a>
                 </li>
@@ -45,9 +46,9 @@
             }
         </ul>
     </div>
-    <hr/>
+    <hr />
 
-    <table class="table table-bordered table-success">
+    <table class="table table-bordered table-info">
         <thead>
             <tr>
                 <th>ID</th>

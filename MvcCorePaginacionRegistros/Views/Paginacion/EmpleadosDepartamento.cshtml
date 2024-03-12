@@ -1,0 +1,85 @@
+﻿@model Empleado
+
+@{
+    Departamento departamento =
+            ViewData["DEPARTAMENTOSELECCIONADO"] as Departamento;
+}
+
+<h1>Empleados Registro Departamento</h1>
+<p>
+    <a asp-controller="Paginacion"
+        asp-action="Departamentos">
+        Volver a departamentos
+    </a>
+</p>
+
+<ul class="list-group">
+    <li class="list-group-item list-group-item-danger">
+        Id Departamento: @departamento.IdDepartamento
+    </li>
+    <li class="list-group-item list-group-item-info">
+        Nombre: @departamento.Nombre
+    </li>
+    <li class="list-group-item list-group-item-info">
+        Localidad: @departamento.Localidad
+    </li>
+</ul>
+
+<h2 style="color:blue">
+    Registro @ViewData["POSICION"] de @ViewData["REGISTROS"]
+</h2>
+
+<div>
+    <ul class="list-group list-group-horizontal">
+        <li class="list-group-item">
+            <a asp-controller="Paginacion"
+               asp-action="EmpleadosDepartamento"
+               asp-route-posicion="1"
+               asp-route-iddepartamento="@ViewData["DEPARTAMENTO"]">
+                Primero
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a asp-controller="Paginacion"
+               asp-action="EmpleadosDepartamento"
+               asp-route-posicion="@ViewData["ANTERIOR"]"
+               asp-route-iddepartamento="@ViewData["DEPARTAMENTO"]">
+                Anterior
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a asp-controller="Paginacion"
+               asp-action="EmpleadosDepartamento"
+               asp-route-posicion="@ViewData["SIGUIENTE"]"
+               asp-route-iddepartamento="@ViewData["DEPARTAMENTO"]">
+                Siguiente
+            </a>
+        </li>
+        <li class="list-group-item">
+            <a asp-controller="Paginacion"
+               asp-action="EmpleadosDepartamento"
+               asp-route-posicion="@ViewData["ULTIMO"]"
+               asp-route-iddepartamento="@ViewData["DEPARTAMENTO"]">
+                Ultimo
+            </a>
+        </li>
+    </ul>
+</div>
+<hr />
+<ul class="list-group">
+    <li class="list-group-item list-group-item-info">
+        Id Empleado: @Model.IdEmpleado
+    </li>
+    <li class="list-group-item list-group-item-info">
+        Apellido: @Model.Apellido
+    </li>
+    <li class="list-group-item list-group-item-info">
+        Oficio: @Model.Oficio
+    </li>
+    <li class="list-group-item list-group-item-info">
+        Salario: @Model.Salario
+    </li>
+    <li class="list-group-item list-group-item-info">
+        Departamento: @Model.IdDepartamento
+    </li>
+</ul>

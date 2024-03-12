@@ -1,0 +1,16 @@
+﻿@model List<Departamento>
+
+<h1>Practica Paginacion Empleados Departamento</h1>
+
+<ul class="list-group">
+    @foreach (Departamento dept in Model)
+    {
+        <li class="list-group-item">
+            <a asp-controller="Paginacion"
+                asp-action="EmpleadosDepartamento"
+                asp-route-iddepartamento="@dept.IdDepartamento">
+                @dept.Nombre
+            </a>
+        </li>
+    }
+</ul>
